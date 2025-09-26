@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Random Card</title>
+    <style>
+        body { font-family: Arial; padding: 20px; text-align: center; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px; }
+        .card-container { margin: 20px 0; }
+        .card-image { max-width: 300px; margin-bottom: 15px; display: none; }
+        .card-info { margin: 20px 0; padding: 15px; border: 1px solid #ccc; display: inline-block; display: none; }
+        .revealed { display: block !important; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <button onclick="getNewCard()">Get New Card</button>
+    <button onclick="revealDetails()" id="reveal-details-btn" disabled>Reveal Card Details</button>
+    
+    <div class="card-container">
+        <img id="card-image" class="card-image" alt="Card Image">
+        <div id="card-info" class="card-info"></div>
+    </div>
+
+    <script>
+        let currentCard = null;
+        let currentImage = null;
+
+        async function getNewCard() {
+            try {
+                // Hide previous reveals
+                document.getElementById('card-image').classList.remove('revealed');
+                document.getElementById('card-info').classList.remove('revealed');
+                
+                // Disable details button during loading
+                document.getElementById('reveal-details-btn').disabled = true;
+                
+                document.getElementById('card-info').innerHTML = "Loading new card...";
+                
+                // Replace with your actual GitHub raw URLs
+                const cardDataUrl = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_data_cards.json';
+                
+                // Range definitions
+                const imageDataUrl1range = 2808; // 0-2808
+                const imageDataUrl2range = 5616; // 2809-5616
+                const imageDataUrl3range = 8423; // 5617-8424
+                
+                // Your actual GitHub URLs for the split image files
+                const imageDataUrl1 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_1.json';
+                const imageDataUrl2 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_2.json';
+                const imageDataUrl3 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_3.json';
+
+                // Fetch card data first
+                const cardResponse = await fetch(cardDataUrl);
+                const cardData = await cardResponse.json();
+                
+                // Get all the card objects as arrays
+                const cards = Object.values(cardData);
+                
+                // Get a random card index
+                const randomIndex = Math.floor(Math.random() * cards.length);
+                currentCard = cards[randomIndex];
+                
+                console.log(`Random index: ${randomIndex}, Card name: ${currentCard.Card_Name}`);
+                
+                // Determine which image file to fetch based on the random index
+                let imageDataUrl;
+                let adjustedIndex = randomIndex;
+                
+                if (randomIndex <= imageDataUrl1range) {
+                    imageDataUrl = imageDataUrl1;
+                    console.log(`Using image file 1 (0-${imageDataUrl1range})`);
+                } else if (randomIndex <= imageDataUrl2range) {
+                    imageDataUrl = imageDataUrl2;
+                    adjustedIndex = randomIndex - (imageDataUrl1range + 1); // Adjust index for second file
+                    console.log(`Using image file 2 (${imageDataUrl1range + 1}-${imageDataUrl2range}), adjusted index: ${adjustedIndex}`);
+                } else {
+                    imageDataUrl = imageDataUrl3;
+                    adjustedIndex = randomIndex - (imageDataUrl2range + 1); // Adjust index for third file
+                    console.log(`Using image file 3 (${imageDataUrl2range + 1}-${imageDataUrl3range}), adjusted index: ${adjustedIndex}`);
+                }
+                
+                // Fetch the appropriate image data file
+                const imageResponse = await fetch(imageDataUrl);
+                const imageDataArray = await imageResponse.json();
+                
+                // Find the matching image by filename
+                currentImage = imageDataArray.find(img => img.filename === currentCard.Card_Name);
+                
+                if (!currentImage) {
+                    // Fallback: try to find by index if filename match fails
+                    currentImage = imageDataArray[adjustedIndex];
+                    if (!currentImage) {
+                        throw new Error(`No matching image found for card: ${currentCard.Card_Name}`);
+                    }
+                    console.log(`Found image by index fallback: ${currentImage.filename}`);
+                }
+                
+                // Automatically reveal the image
+                const cardImage = document.getElementById('card-image');
+                cardImage.src = "data:image/jpeg;base64," + currentImage.content_base64;
+                cardImage.alt = currentCard.Card_Name;
+                cardImage.classList.add('revealed');
+                
+                // Enable the details reveal button
+                document.getElementById('reveal-details-btn').disabled = false;
+                
+                document.getElementById('card-info').innerHTML = "Image revealed! Click 'Reveal Card Details' to see the card information.";
+                
+            } catch (e) {
+                document.getElementById('card-info').innerHTML = "Error: " + e.message;
+                console.error(e);
+            }
+        }
+
+        function revealDetails() {
+            if (currentCard) {
+                const cardInfo = document.getElementById('card-info');
+                cardInfo.innerHTML = `
+                    <h3>${currentCard.Card_Name}</h3>
+                    <p><strong>Release Date:</strong> ${currentCard.Release_Date}</p>
+                    <p><strong>Attribute:</strong> ${currentCard.Attribute}</p>
+                    <p><strong>Type:</strong> ${currentCard.Type}</p>
+                    <p><strong>Level/Rank/Link:</strong> ${currentCard["Level/Rank/Link"]}</p>
+                    <p><strong>ATK:</strong> ${currentCard.ATK}</p>
+                `;
+                cardInfo.classList.add('revealed');
+                document.getElementById('reveal-details-btn').disabled = true;
+            }
+        }
+    </script>
+</body>
+</html>
