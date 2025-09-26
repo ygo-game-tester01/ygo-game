@@ -1,3 +1,2 @@
 # _config.yml
-theme: none
-plugins: []
+theme: jekyll-theme-minimal
