@@ -3,17 +3,97 @@
 <head>
     <title>Random Card</title>
     <style>
-        body { font-family: Arial; padding: 20px; text-align: center; }
-        button { padding: 10px 20px; font-size: 16px; margin: 10px; }
-        .card-container { margin: 20px 0; }
-        .card-image { max-width: 300px; margin-bottom: 15px; display: none; }
-        .card-info { margin: 20px 0; padding: 15px; border: 1px solid #ccc; display: inline-block; display: none; }
-        .revealed { display: block !important; margin: 0 auto; }
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            text-align: center; 
+            background-color: #f5f5f5;
+        }
+        button { 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            margin: 10px; 
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .card-container { 
+            margin: 20px 0; 
+        }
+        .card-image { 
+            max-width: 300px; 
+            margin-bottom: 15px; 
+            display: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .card-info { 
+            margin: 20px auto; 
+            padding: 15px; 
+            border: 1px solid #ccc; 
+            display: inline-block; 
+            display: none;
+            max-width: 500px;
+            text-align: left;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .revealed { 
+            display: block !important; 
+            margin: 0 auto; 
+        }
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffcdd2;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        .status-message {
+            color: #1976d2;
+            background-color: #bbdefb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            color: #333;
+        }
     </style>
 </head>
 <body>
+    <h1>Yu-Gi-Oh! Random Card Generator</h1>
+    
     <button onclick="getNewCard()">Get New Card</button>
     <button onclick="revealDetails()" id="reveal-details-btn" disabled>Reveal Card Details</button>
+    
+    <div id="status-message" class="status-message"></div>
+    <div id="error-message" class="error-message"></div>
     
     <div class="card-container">
         <img id="card-image" class="card-image" alt="Card Image">
@@ -24,18 +104,54 @@
         let currentCard = null;
         let currentImage = null;
 
+        // Function to update status message
+        function updateStatus(message) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.style.display = message ? 'block' : 'none';
+        }
+
+        // Function to show error message
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Hide status message when showing error
+            updateStatus('');
+        }
+
+        // Function to hide error message
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        // Function to fetch with error handling
+        async function fetchWithErrorHandling(url, resourceName) {
+            try {
+                updateStatus(`Fetching ${resourceName}...`);
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                throw new Error(`Failed to fetch ${resourceName} from ${url}: ${error.message}`);
+            }
+        }
+
         async function getNewCard() {
             try {
-                // Hide previous reveals
+                // Reset UI
+                hideError();
                 document.getElementById('card-image').classList.remove('revealed');
                 document.getElementById('card-info').classList.remove('revealed');
-                
-                // Disable details button during loading
                 document.getElementById('reveal-details-btn').disabled = true;
-                
                 document.getElementById('card-info').innerHTML = "Loading new card...";
                 
-                // Replace with your actual GitHub raw URLs
+                // GitHub raw URLs
                 const cardDataUrl = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_data_cards.json';
                 
                 // Range definitions
@@ -43,14 +159,13 @@
                 const imageDataUrl2range = 5616; // 2809-5616
                 const imageDataUrl3range = 8423; // 5617-8424
                 
-                // Your actual GitHub URLs for the split image files
+                // GitHub URLs for the split image files
                 const imageDataUrl1 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_1.json';
                 const imageDataUrl2 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_2.json';
                 const imageDataUrl3 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_3.json';
 
                 // Fetch card data first
-                const cardResponse = await fetch(cardDataUrl);
-                const cardData = await cardResponse.json();
+                const cardData = await fetchWithErrorHandling(cardDataUrl, 'card data');
                 
                 // Get all the card objects as arrays
                 const cards = Object.values(cardData);
@@ -79,8 +194,7 @@
                 }
                 
                 // Fetch the appropriate image data file
-                const imageResponse = await fetch(imageDataUrl);
-                const imageDataArray = await imageResponse.json();
+                const imageDataArray = await fetchWithErrorHandling(imageDataUrl, 'image data');
                 
                 // Find the matching image by filename
                 currentImage = imageDataArray.find(img => img.filename === currentCard.Card_Name);
@@ -104,9 +218,11 @@
                 document.getElementById('reveal-details-btn').disabled = false;
                 
                 document.getElementById('card-info').innerHTML = "Image revealed! Click 'Reveal Card Details' to see the card information.";
+                updateStatus('Card loaded successfully!');
                 
             } catch (e) {
-                document.getElementById('card-info').innerHTML = "Error: " + e.message;
+                showError(e.message);
+                document.getElementById('card-info').innerHTML = "Error loading card. Please try again.";
                 console.error(e);
             }
         }
@@ -124,9 +240,9 @@
                 `;
                 cardInfo.classList.add('revealed');
                 document.getElementById('reveal-details-btn').disabled = true;
+                updateStatus('Card details revealed!');
             }
         }
     </script>
 </body>
-
 </html>
