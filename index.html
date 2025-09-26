@@ -36,7 +36,7 @@
                 document.getElementById('card-info').innerHTML = "Loading new card...";
                 
                 // Replace with your actual GitHub raw URLs
-                const cardDataUrl = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_data_cards.json';
+                const cardDataUrl = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_data_cards.json';
                 
                 // Range definitions
                 const imageDataUrl1range = 2808; // 0-2808
@@ -44,9 +44,9 @@
                 const imageDataUrl3range = 8423; // 5617-8424
                 
                 // Your actual GitHub URLs for the split image files
-                const imageDataUrl1 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_1.json';
-                const imageDataUrl2 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_2.json';
-                const imageDataUrl3 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game-html/refs/heads/main/all_image_cards_3.json';
+                const imageDataUrl1 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_1.json';
+                const imageDataUrl2 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_2.json';
+                const imageDataUrl3 = 'https://raw.githubusercontent.com/ygo-game-tester01/ygo-game/refs/heads/main/all_image_cards_3.json';
 
                 // Fetch card data first
                 const cardResponse = await fetch(cardDataUrl);
@@ -128,4 +128,5 @@
         }
     </script>
 </body>
+
 </html>
